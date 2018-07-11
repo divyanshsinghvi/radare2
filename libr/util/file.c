@@ -939,10 +939,18 @@ err_r_file_mkstemp:
 	free (prefix_);
 #else
 	char name[1024];
+	char pfxx[1024];
+	const char *suffix = strchr (prefix, '*');
 
-	snprintf (name, sizeof (name) - 1, "%s/r2.%s.XXXXXX", path, prefix);
+	if (suffix) {
+		suffix++;
+		r_str_ncpy (pfxx, prefix, (size_t)(suffix - prefix));
+		prefix = pfxx;
+	}
+
+	snprintf (name, sizeof (name) - 1, "%s/%s.XXXXXX%s", path, prefix, suffix);
 	mode_t mask = umask (S_IWGRP | S_IWOTH);
-	h = mkstemp (name);
+	h = mkstemps (name, suffix? strlen (suffix): 0);
 	umask (mask);
 	if (oname) {
 		*oname = (h!=-1)? strdup (name): NULL;
